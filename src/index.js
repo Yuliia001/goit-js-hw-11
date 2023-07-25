@@ -36,11 +36,13 @@ async function handlerFormSearch(evt) {
             return;
         }
         gallery.innerHTML = createMarkup(data.hits);
+        form.reset();
         lightbox = new SimpleLightbox('.gallery a', {
             captionsData: 'alt',
             captionPosition: 'bottom',
             captionDelay: 250,
         })
+        
         if (data.hits.length >= perPage) {
             btnLoadMore.style.display = 'block';
         } else {
