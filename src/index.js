@@ -1,8 +1,8 @@
 import Notiflix from 'notiflix';
-import axios from 'axios';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import { getData } from './get-data';
+import { createMarkup } from './markup';
 
 const refs = {
     form: document.querySelector('.search-form'),
@@ -13,21 +13,25 @@ const { form, gallery, btnLoadMore } = refs;
 
 const perPage = 40;
 let currentPage = 1;
-// let searchQuery = '';
+let searchQuery = '';
 let lightbox;
 
+
 form.addEventListener('submit', handlerFormSearch);
-btnLoadMore.addEventListener('.click', handlerLoadMore);
+btnLoadMore.addEventListener('click', handlerLoadMore);
+btnLoadMore.style.display = 'none';
 
 async function handlerFormSearch(evt) {
     evt.preventDefault();
-   const searchQuery = evt.target.elements.searchQuery.value.trim();
+    searchQuery = evt.target.elements.searchQuery.value.trim();
     if (!searchQuery) {
         return;
     }
     try {
         const data = await getData(searchQuery, currentPage);
         if (!data.hits.length) {
+            gallery.innerHTML = '';
+            btnLoadMore.style.display = 'none';
             Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
             return;
         }
@@ -36,42 +40,50 @@ async function handlerFormSearch(evt) {
             captionsData: 'alt',
             captionPosition: 'bottom',
             captionDelay: 250,
-        });
+        })
+        if (data.hits.length >= perPage) {
+            btnLoadMore.style.display = 'block';
+        } else {
+            btnLoadMore.style.display = 'none';
+        }
     }
-
-
     catch (err) {
         console.log(err);
          Notiflix.Notify.failure('Failed to get data. Please try again later.');
-  }
+    }   
 }
 
-function handlerLoadMore() {
-    
+ async function handlerLoadMore() { 
+    currentPage += 1;
+    try {const data = await getData(searchQuery, currentPage);
+        if (!data.hits.length) {
+            Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+            return;
+        }
+        gallery.insertAdjacentHTML('beforeend', createMarkup(data.hits));
+        lightbox.refresh();
+        scrollSmooth();
+        if (data.totalHits > currentPage * perPage) {
+            btnLoadMore.style.display = 'block';
+        } else {
+            btnLoadMore.style.display = 'none';
+            Notiflix.Notify.info('Opps! It is the end of search results.');
+    }
+        
+    } catch (err) {
+        console.log(err);
+        Notiflix.Notify.failure('Failed to get data. Please try again later.');
+    }
+
 }
-function createMarkup(arr) {
-    return arr.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => `
-    <div class="photo-card">
-        <a href="${largeImageURL}">
-          <img src="${webformatURL}" alt="${tags}}" loading="lazy" width="300"/>
-        </a>
-        <div class="info">
-            <p class="info-item">
-            <b>Likes: ${likes}</b>
-            </p>
-            <p class="info-item">
-            <b>Views: ${views }</b>
-            </p>
-            <p class="info-item">
-            <b>Comments: ${comments}</b>
-            </p>
-            <p class="info-item">
-            <b>Downloads: ${downloads}</b>
-            </p>
-        </div>
-    </div>`).join('')
-    
-    
+
+ function scrollSmooth() {
+    const { height: cardHeight } = gallery.firstElementChild.getBoundingClientRect();
+    window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
+    });
 }
+
 
 
