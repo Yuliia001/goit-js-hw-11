@@ -1,14 +1,11 @@
 import Notiflix from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import { getData } from './get-data';
-import { createMarkup } from './markup';
+import { getData } from './js/get-data';
+import { createMarkup } from './js/markup';
+import { scrollSmooth } from './js/smooth-scroll';
+import { refs } from './js/refs';
 
-const refs = {
-    form: document.querySelector('.search-form'),
-    gallery: document.querySelector('.gallery'),
-    btnLoadMore: document.querySelector('.load-more')
-}
 const { form, gallery, btnLoadMore } = refs;
 
 const perPage = 40;
@@ -28,6 +25,7 @@ async function handlerFormSearch(evt) {
         return;
     }
     try {
+        currentPage = 1;
         const data = await getData(searchQuery, currentPage);
         if (!data.hits.length) {
             gallery.innerHTML = '';
@@ -79,13 +77,5 @@ async function handlerFormSearch(evt) {
 
 }
 
- function scrollSmooth() {
-    const { height: cardHeight } = gallery.firstElementChild.getBoundingClientRect();
-    window.scrollBy({
-        top: cardHeight * 2,
-        behavior: 'smooth',
-    });
-}
-
-
+ 
 
